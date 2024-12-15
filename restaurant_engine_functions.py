@@ -66,10 +66,10 @@ def plot_bigrams(bigrams_df, title, save_path):
     plt.savefig(save_path)
     plt.close()
 
-# Function to generate word clouds
-def generate_wordcloud(reviews, title, save_path):
+# Function to generate word clouds with optional colormap
+def generate_wordcloud(reviews, title, save_path, colormap='viridis'):
     text = " ".join(reviews)
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    wordcloud = WordCloud(width=800, height=400, background_color='white', colormap=colormap).generate(text)
     plt.figure(figsize=(10, 6))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.title(title, fontsize=16)

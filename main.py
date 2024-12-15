@@ -12,13 +12,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
 from wordcloud import WordCloud
 from restaurant_engine_functions import (
     force_english_google_maps, calculate_sentiment, calculate_review_date,
-    generate_wordcloud, extract_top_bigrams, plot_star_distribution, plot_aspect_sentiment
+    generate_wordcloud, extract_top_bigrams
 )
 
 # Initialize FastAPI app and templates
@@ -27,10 +26,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Set Seaborn style for better visuals
-sns.set(style="whitegrid", palette="muted", font_scale=1.2)
-
 
 # Function to extract restaurant name
 def extract_restaurant_name(url):
@@ -43,11 +38,9 @@ def extract_restaurant_name(url):
         logging.error("Error extracting restaurant name: %s", e)
         return "Unknown Restaurant"
 
-
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-
 
 @app.post("/submit", response_class=HTMLResponse)
 async def submit_url(request: Request, url: str = Form(...)):
@@ -114,82 +107,71 @@ async def submit_url(request: Request, url: str = Form(...)):
 
         driver.quit()
 
-       # Process data
+        # Process data
         reviews_df = pd.DataFrame(reviews_data)
         reviews_df["sentiment_score"] = reviews_df["review"].apply(calculate_sentiment)
+        reviews_df["date_of_review"] = pd.to_datetime(reviews_df["date"].apply(calculate_review_date), errors='coerce')
 
-        # Apply calculate_review_date and ensure datetime conversion
-        reviews_df["date_of_review"] = reviews_df["date"].apply(calculate_review_date)
-        reviews_df["date_of_review"] = pd.to_datetime(reviews_df["date_of_review"], errors='coerce')  # Force datetime conversion
-
-        # Remove rows with invalid or future dates
+        # Filter invalid dates
         today = datetime.now()
-        reviews_df = reviews_df.dropna(subset=["date_of_review"])  # Drop invalid dates
-        reviews_df = reviews_df[reviews_df["date_of_review"] <= today]  # Remove future dates
-
-        # Convert to Year-Month for plotting
+        reviews_df = reviews_df.dropna(subset=["date_of_review"])
+        reviews_df = reviews_df[reviews_df["date_of_review"] <= today]
         reviews_df["year_month"] = reviews_df["date_of_review"].dt.to_period("M").dt.to_timestamp()
 
         os.makedirs("static", exist_ok=True)
 
-        # Word Clouds
+       # Word Clouds
         positive_reviews = reviews_df[reviews_df["sentiment_score"] > 0]["review"].tolist()
         generate_wordcloud(positive_reviews, "Positive Word Cloud", "static/wordcloud_positive.png")
-
+    
         negative_reviews = reviews_df[reviews_df["sentiment_score"] < 0]["review"].tolist()
-        generate_wordcloud(negative_reviews, "Negative Word Cloud", "static/wordcloud_negative.png")
+        generate_wordcloud(negative_reviews, "Negative Word Cloud", "static/wordcloud_negative.png", colormap="Reds")
 
-        # Top Bigrams
-        bigrams_df = extract_top_bigrams(reviews_df["review"].tolist())
-        plt.figure(figsize=(10, 6))
-        sns.barplot(y=bigrams_df['bigram'], x=bigrams_df['count'], palette="Blues_d", edgecolor="black")
-        plt.title("Top Bigrams", fontsize=16, fontweight='bold')
-        plt.tight_layout()
-        plt.savefig("static/bigrams.png")
-        plt.close()
-
-       # Sentiment Over Time
-        sentiment_over_time = reviews_df.groupby("year_month")["sentiment_score"].mean()
-
-        plt.figure(figsize=(12, 6))
-        plt.plot(sentiment_over_time.index, sentiment_over_time, marker='o', color='royalblue', linewidth=2)
-        plt.title("Sentiment Over Time", fontsize=16, fontweight='bold')
-        plt.xlabel("Year-Month", fontsize=12)
-        plt.ylabel("Average Sentiment Score", fontsize=12)
-
-        # Limit the x-axis to valid year_month range
-        plt.xlim(sentiment_over_time.index.min(), sentiment_over_time.index.max())
+        # Sentiment Over Time
+        sentiment_over_time = reviews_df.groupby("year_month")["sentiment_score"].mean().reset_index()
+        sentiment_over_time["year_month"] = sentiment_over_time["year_month"].dt.strftime("%Y-%m")  # Format Year-Month
         
-        # Format x-axis as Year-Month
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-        plt.xticks(rotation=45)
-        
-        plt.grid(visible=True, linestyle="--", alpha=0.5)
-        plt.tight_layout()
-        plt.savefig("static/sentiment_over_time.png")
-        plt.close()
+        fig_sentiment = px.line(
+            sentiment_over_time,
+            x="year_month",
+            y="sentiment_score",
+            labels={"year_month": "Year-Month", "sentiment_score": "Average Sentiment Score"},
+            title="Sentiment Over Time"
+        )
+        fig_sentiment.update_xaxes(type="category")  # Ensure Year-Month is treated as categories for proper ordering
+        fig_sentiment.write_image("static/sentiment_over_time.png")
 
         # Star Ratings Distribution
-        plt.figure(figsize=(8, 6))
-        sns.countplot(x=reviews_df["score"], palette="YlOrBr", edgecolor="black")
-        plt.title("Star Ratings Distribution", fontsize=16, fontweight='bold')
-        plt.tight_layout()
-        plt.savefig("static/star_distribution.png")
-        plt.close()
+        fig_star_dist = px.histogram(
+            reviews_df, x="score", nbins=5,
+            title="Star Ratings Distribution",
+            labels={"score": "Star Rating", "count": "Count"}
+        )
+        fig_star_dist.write_image("static/star_distribution.png")
 
         # Aspect Sentiment
         aspect_avg_sentiment = {
-            "food": reviews_df[reviews_df["review"].str.contains("food")]["sentiment_score"].mean(),
-            "service": reviews_df[reviews_df["review"].str.contains("service")]["sentiment_score"].mean(),
-            "ambiance": reviews_df[reviews_df["review"].str.contains("ambiance")]["sentiment_score"].mean(),
-            "price": reviews_df[reviews_df["review"].str.contains("price")]["sentiment_score"].mean()
+            "food": reviews_df[reviews_df["review"].str.contains("food", case=False)]["sentiment_score"].mean(),
+            "service": reviews_df[reviews_df["review"].str.contains("service", case=False)]["sentiment_score"].mean(),
+            "ambiance": reviews_df[reviews_df["review"].str.contains("ambiance", case=False)]["sentiment_score"].mean(),
+            "price": reviews_df[reviews_df["review"].str.contains("price", case=False)]["sentiment_score"].mean(),
         }
-        plt.figure(figsize=(8, 6))
-        sns.barplot(x=list(aspect_avg_sentiment.keys()), y=list(aspect_avg_sentiment.values()), palette="Greens_d", edgecolor="black")
-        plt.title("Aspect-Based Sentiment", fontsize=16, fontweight='bold')
-        plt.tight_layout()
-        plt.savefig("static/aspect_sentiment.png")
-        plt.close()
+        fig_aspect = px.bar(
+            x=list(aspect_avg_sentiment.keys()),
+            y=list(aspect_avg_sentiment.values()),
+            labels={"x": "Aspect", "y": "Average Sentiment"},
+            title="Aspect-Based Sentiment"
+        )
+        fig_aspect.write_image("static/aspect_sentiment.png")
+
+        # Top Bigrams
+        bigrams_df = extract_top_bigrams(reviews_df["review"].tolist())
+        fig_bigrams = px.bar(
+            bigrams_df, x="count", y="bigram", orientation="h",
+            title="Top Bigrams",
+            labels={"count": "Count", "bigram": "Bigram"}
+        )
+        fig_bigrams.write_image("static/bigrams.png")
 
         avg_sentiment = reviews_df["sentiment_score"].mean()
         complaint_rate = len(reviews_df[reviews_df["sentiment_score"] < -0.05]) / len(reviews_df)
