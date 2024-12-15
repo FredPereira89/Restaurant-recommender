@@ -20,20 +20,24 @@ def calculate_review_date(row_date):
     try:
         if "month" in row_date:
             months = int(row_date.split()[0]) if "a month ago" not in row_date else 1
-            return now - timedelta(days=30 * months)
+            date = now - timedelta(days=30 * months)
         elif "year" in row_date:
             years = int(row_date.split()[0]) if "a year ago" not in row_date else 1
-            return now - timedelta(days=365 * years)
+            date = now - timedelta(days=365 * years)
         elif "week" in row_date:
             weeks = int(row_date.split()[0]) if "a week ago" not in row_date else 1
-            return now - timedelta(weeks=weeks)
+            date = now - timedelta(weeks=weeks)
         elif "day" in row_date:
             days = int(row_date.split()[0]) if "a day ago" not in row_date else 1
-            return now - timedelta(days=days)
+            date = now - timedelta(days=days)
         else:
-            return None
+            date = now  # Default fallback
+
+        # Ensure no future dates
+        date = min(date, now)
+        return date.date()  # Return only the date part
     except (ValueError, IndexError):
-        return None
+        return now.date()  # Return today's date as fallback
 
 # Function for sentiment analysis using VADER
 def calculate_sentiment(text):

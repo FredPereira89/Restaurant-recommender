@@ -1,64 +1,204 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Recommendation Result</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Results</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f5f7;
+            margin: 0;
             color: #333;
         }
-        h1 {
-            color: #4CAF50;
+
+        .hero {
+            text-align: center;
+            background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center/cover;
+            color: #fff;
+            padding: 50px 20px;
+            position: relative;
         }
-        h2, h3 {
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: -30px auto 40px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .verdict {
+            margin: 20px 0;
+            font-size: 1.8rem;
+        }
+
+        .verdict span {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        .do-not-recommend {
+            background-color: #e74c3c;
+            color: #fff;
+        }
+
+        .recommend {
+            background-color: #1abc9c;
+            color: #fff;
+        }
+
+        .must-go {
+            background-color: #f1c40f;
+            color: #fff;
+        }
+
+        .really-must-go {
+            background-color: #8e44ad;
+            color: #fff;
+        }
+
+        .metrics {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
             margin-top: 20px;
         }
-        p {
-            font-size: 16px;
+
+        .metric {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
-        .visualization {
+
+        h3 {
+            font-size: 1.6rem;
+            color: #34495e;
+            margin: 30px 0 20px;
+        }
+
+        .visualizations {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            margin-top: 20px;
+            justify-content: center;
         }
-        .visualization img {
+
+        .visualizations img {
             max-width: 45%;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
         }
-        a {
+
+        .visualizations img:hover {
+            transform: scale(1.05);
+        }
+
+        .back-btn {
             display: inline-block;
-            margin-top: 20px;
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
             text-decoration: none;
-            color: white;
-            background-color: #4CAF50;
-            padding: 10px 20px;
-            border-radius: 5px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
         }
-        a:hover {
-            background-color: #45a049;
+
+        .back-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
         }
     </style>
 </head>
 <body>
-    <h1>Restaurant Recommendation</h1>
-    <h2>Verdict: {{ recommendation }}</h2>
-    <p><strong>Average Sentiment Score:</strong> {{ avg_sentiment }}</p>
-    <p><strong>Complaint Rate:</strong> {{ complaint_rate }}</p>
-
-    <h3>Visualizations:</h3>
-    <div class="visualization">
-        <img src="/static/wordcloud_positive.png" alt="Positive Word Cloud">
-        <img src="/static/wordcloud_negative.png" alt="Negative Word Cloud">
-        <img src="/static/bigrams.png" alt="Top Bigrams">
-        <img src="/static/sentiment_over_time.png" alt="Sentiment Over Time">
-        <img src="/static/star_distribution.png" alt="Star Ratings Distribution">
-        <img src="/static/aspect_sentiment.png" alt="Aspect Sentiment Analysis">
+    <div class="hero">
+        <div class="hero-content">
+            <h1>Restaurant Results</h1>
+        </div>
     </div>
 
-    <a href="/">Go Back</a>
+    <div class="container">
+        <h2>Your Dining Verdict</h2>
+
+        <div class="verdict">
+            {% if recommendation == 'Do Not Recommend' %}
+                <span class="do-not-recommend"><i class="fas fa-thumbs-down"></i> {{ recommendation }}</span>
+            {% elif recommendation == 'Recommend' %}
+                <span class="recommend"><i class="fas fa-thumbs-up"></i> {{ recommendation }}</span>
+            {% elif recommendation == 'Must Go' %}
+                <span class="must-go"><i class="fas fa-star"></i> {{ recommendation }}</span>
+            {% elif recommendation == 'Really Must Go' %}
+                <span class="really-must-go"><i class="fas fa-star"></i> {{ recommendation }}</span>
+            {% endif %}
+        </div>
+
+        <div class="metrics">
+            <div class="metric">
+                <p>⭐ Average Sentiment Score: <strong>{{ avg_sentiment }}</strong></p>
+            </div>
+            <div class="metric">
+                <p>⚠️ Complaint Rate: <strong>{{ complaint_rate }}</strong></p>
+            </div>
+        </div>
+
+        <h3>Visual Insights</h3>
+        <div class="visualizations">
+            <img src="/static/wordcloud_positive.png" alt="Positive Word Cloud">
+            <img src="/static/wordcloud_negative.png" alt="Negative Word Cloud">
+            <img src="/static/bigrams.png" alt="Top Bigrams">
+            <img src="/static/sentiment_over_time.png" alt="Sentiment Over Time">
+            <img src="/static/star_distribution.png" alt="Star Ratings Distribution">
+            <img src="/static/aspect_sentiment.png" alt="Aspect Sentiment">
+        </div>
+
+        <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Analysis</a>
+    </div>
 </body>
 </html>

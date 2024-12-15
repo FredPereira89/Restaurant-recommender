@@ -1,15 +1,236 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find your next dining destination by analyzing Google Maps reviews with our Restaurant Recommender tool.">
     <title>Restaurant Recommender</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f4f5f7;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Hero Section with Background Image */
+        .hero {
+            text-align: center;
+            background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center/cover;
+            color: #fff;
+            padding: 80px 20px;
+            position: relative;
+        }
+
+        /* Add a gradient overlay */
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin: 10px 0 20px;
+        }
+
+        /* Form Section */
+        .form-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: -30px;
+            min-height: 30vh;
+        }
+
+        .container {
+            max-width: 450px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        .container h2 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #444;
+        }
+
+        .input-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 15px;
+        }
+
+        .input-container input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .input-container input:focus {
+            border-color: #1abc9c;
+            outline: none;
+        }
+
+        .input-container .icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            font-size: 1.2rem;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #16a085;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .instructions {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        .instructions a {
+            color: #1abc9c;
+            text-decoration: underline;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            margin: 15px auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #ddd;
+            border-top: 4px solid #1abc9c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Enter Google Reviews URL</h1>
-    <p>Please paste the URL of the Google Maps reviews page for the restaurant you'd like analyzed.</p>
-    <p>Example: <a href="https://www.google.com/maps">Google Maps Link</a></p>
-    <form action="/submit" method="post">
-        <label for="url">Google Maps URL:</label>
-        <input type="text" name="url" id="url" placeholder="Enter Google Maps URL" required style="width: 50%; padding: 10px;">
-        <button type="submit" style="padding: 10px 20px; margin-top: 10px;">Analyze</button>
-    </form>
+    <!-- Hero Section with Background Image -->
+    <div class="hero">
+        <div class="hero-content">
+            <h1>Is the restaurant worth it?</h1>
+            <p>Analyze reviews and uncover the best dining spots.</p>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="form-section">
+        <div class="container">
+            <form action="/submit" method="post" id="review-form">
+                <h2>Paste Google Maps Review Link</h2>
+                <div class="input-container">
+                    <span class="icon"><i class="fas fa-link"></i></span>
+                    <input 
+                        type="url" 
+                        name="url" 
+                        id="url" 
+                        placeholder="Enter Google Maps URL" 
+                        aria-label="Enter Google Maps review URL" 
+                        required>
+                </div>
+                <button type="submit">
+                    <i class="fas fa-search"></i> Analyze
+                </button>
+            </form>
+            <div class="spinner" id="loading-spinner"></div>
+            <div class="instructions">
+                <p>Example link: <a href="https://www.google.com/maps/place/McDonald's+P%C3%B3voa+de+Santa+Iria/@38.8410964,-9.0771298,14.25z/data=!4m18!1m9!3m8!1s0xd192f29d77f3fc3:0xebfd556425a302b2!2sCostel%C3%A3o+de+Ouro!8m2!3d38.8690692!4d-9.0574258!9m1!1b1!16s%2Fg%2F11p5gkscmj!3m7!1s0xd192faf908fbc4f:0xde00e96e4d047c3!8m2!3d38.856106!4d-9.070321!9m1!1b1!16s%2Fg%2F11pq9585fz?entry=ttu&g_ep=EgoyMDI0MTIxMS4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Google Maps</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add loading spinner on form submission
+        const form = document.getElementById('review-form');
+        const spinner = document.getElementById('loading-spinner');
+
+        form.addEventListener('submit', function (e) {
+            spinner.style.display = 'block';
+        });
+    </script>
 </body>
 </html>
